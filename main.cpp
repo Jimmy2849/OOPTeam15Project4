@@ -347,7 +347,7 @@ void gameScreen() {
 	bool valid;
 
 	printTimer(3);
-	PlaySound(TEXT("8BitAdventure.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+	PlaySound(TEXT("8BitAdventure.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP | SND_NODEFAULT);
 	drawMap();
 	drawInfo(p1);
 	drawInfo(p2);
