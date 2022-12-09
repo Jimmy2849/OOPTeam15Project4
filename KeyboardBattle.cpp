@@ -222,11 +222,11 @@ void drawMap() {
 void drawInfo(const Player& p) {
 	gotoxy(p.getStart().X, p.getStart().Y + 1);
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-	for (int i = 0; i < p.getLife(); i++) {
+	for (unsigned int i = 0; i < p.getLife(); i++) {
 		cout << "¢¾";
 	}
 	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-	for (int i = 0; i < 3 - p.getLife(); i++) {
+	for (unsigned int i = 0; i < 3 - p.getLife(); i++) {
 		cout << "¢½";
 	}
 	gotoxy(WINDOW_WIDTH - 20, p.getStart().Y + 1);
