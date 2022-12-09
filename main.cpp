@@ -296,13 +296,31 @@ void drawMap() {
 		<< "■■■    ■■" << endl
 		<< "■        ■■" << endl
 		<< "■        ■■";
-
+	
 	gotoxy(0, 14);
 	cout << "■■■  ■■■" << endl
 		 << "■   ■     ■" << endl
 		 << "■■■  ■■■" << endl
 		 << "■      ■" << endl
 		 << "■      ■■■";
+
+	gotoxy(WINDOW_WIDTH - 10, 7);
+	cout << "↑";
+	gotoxy(WINDOW_WIDTH - 12, 8);
+	cout << "←";
+	gotoxy(WINDOW_WIDTH - 10, 8);
+	cout << "↓";
+	gotoxy(WINDOW_WIDTH - 8, 8);
+	cout << "→";
+
+	gotoxy(WINDOW_WIDTH - 10, 17);
+	cout << "W";
+	gotoxy(WINDOW_WIDTH - 12, 18);
+	cout << "A";
+	gotoxy(WINDOW_WIDTH - 10, 18);
+	cout << "S";
+	gotoxy(WINDOW_WIDTH - 8, 18);
+	cout << "D";
 
 	gotoxy(16, 5);
 	cout << ">>>";
