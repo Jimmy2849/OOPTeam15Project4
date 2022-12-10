@@ -7,6 +7,9 @@
 #include <vector>
 #include <string>
 #include <conio.h>
+#include "Rhythm.h"
+#include "Dice.h"
+#include "MatchingGame.h"
 
 #define ARROW_NUM 224
 #define COLOR_BLACK 0x0000
@@ -29,7 +32,7 @@
 using namespace std;
 
 enum MENU {
-	EXIT = 0,
+	EXIT = -100,
 	GAME1,
 	GAME2,
 	GAME3
@@ -44,6 +47,8 @@ void gotoxy(int x, int y);
 //pos : 시작좌표 distance : 메뉴 간 간격 numOfItem : 메뉴 개수
 MENU select(COORD pos, unsigned int distance, unsigned int numOfItem);
 
+void setConsoleView();
+void printScreen();
 void title();
 
 #endif
