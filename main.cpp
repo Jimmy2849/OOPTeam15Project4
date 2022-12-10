@@ -1,9 +1,8 @@
-﻿#include "KeyBoardBattle.h"
+﻿#include "title.h"
 	
 int main() {
-	setConsoleView();
-	while (true)
-		gameScreen();
+
+	title();
 
 }
 

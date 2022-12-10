@@ -1,57 +1,92 @@
-#include "KeyboardBattle.h"
-// 문제 세트를 미리 설정, 플레이어 레벨에 따라 순차 접근
-vector<int> questionvec[MAXIMUM_LEVEL];
+#pragma comment(lib,"winmm.lib")
+#include <iostream>
+#include <windows.h>
+#include <cstdlib>
+#include <conio.h>
+#include <ctime>
+#include <vector>
+#include <string>
+#include <algorithm>
+#include "Rhythm.h"
 
-void Player ::clear() {
+#define WINDOW_WIDTH 100
+#define WINDOW_HEIGHT 21
+#define ARROW_NUM 224
+#define MAXIMUM_LEVEL 15
+
+using namespace std;
+
+
+namespace R {
+	// 게임 상태를 나타내며 ONGOING을 제외한 상태에서는 모두 게임이 종료되어야 함.
+
+
+	// ↑↓←→ 입력에 대한 코드값
+	enum KEYBOARD {
+		UP = 72,
+		LEFT = 75,
+		RIGHT = 77,
+		DOWN = 80
+	};
+	// P1 : (0,1) ~ (79, 9) 방향키 / P2 : (0, 11) ~ (79, 19) wasd // y+10 차이
+
+	void setSize() {
+		// 창 크기 지정
+		char* command = new char[30];
+		sprintf_s(command, 30, "mode con: lines=%d cols=%d", WINDOW_HEIGHT, WINDOW_WIDTH);
+		system(command);
+		delete[] command;
+	}
+
+	void gotoxy(int x, int y)
+	{
+		COORD Pos;
+		Pos.X = x;
+		Pos.Y = y;
+		SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Pos);
+	}
+}
+using namespace R;
+
+//Player class
+void Player::isPressed() {
+	++numOfInput;
+}
+void Player::minusLife() {
+	--life;
+}
+void Player::nextLevel() {
+	++level;
+}
+void Player::clear() {
 	answervec.clear();
 	questionstr.clear();
 	answerstr.clear();
 	numOfInput = 0;
 }
-
-void setConsoleView() {
-	// 제목 설정
-	system("title Keyboard Battle");
-	// 창 크기 지정
-	char* command = new char[30];
-	sprintf_s(command, 30, "mode con: lines=%d cols=%d", WINDOW_HEIGHT, WINDOW_WIDTH);
-	system(command);
-	delete[] command;
-	// 창 크기 고정
-	HWND consoleWindow = GetConsoleWindow();
-	SetWindowLong(consoleWindow, GWL_STYLE, GetWindowLong(consoleWindow, GWL_STYLE) & ~WS_MAXIMIZEBOX & ~WS_SIZEBOX);
-	// 편집모드 해제
-	SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), ENABLE_EXTENDED_FLAGS);
-
-	// 커서 숨김
-	CONSOLE_CURSOR_INFO cursorInfo = { 0, };
-	cursorInfo.dwSize = 1;
-	cursorInfo.bVisible = FALSE;
-	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
-
+bool Player::isOver() const {
+	return life < 1;
+}
+bool Player::isWin() const {
+	return getLevel() > MAXIMUM_LEVEL;
 }
 
-void gotoxy(int x, int y)
-{
-	COORD Pos;
-	Pos.X = x;
-	Pos.Y = y;
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Pos);
-}
+
+
 
 // 게임 시작 또는 재시작 시 준비시간 부여
-void printTimer(int second) {
+void Rhythm::printTimer(int second) {
 	clock_t prevtime, curtime;
 	prevtime = clock();
 	for (int i = 0; i <= second; i++) {
-		while (difftime(curtime = clock(), prevtime) < 1000 * (i + 1)) {};
+		while (difftime(curtime = clock(), prevtime) < (double) 1000 * (i + 1)) {};
 		gotoxy(WINDOW_WIDTH / 2 - 5, WINDOW_HEIGHT / 2);
 		cout << second - i;
 	}
 }
 
 // 게임오버를 나타내는 출력용 함수
-void gameOver(const Player& p) {
+void Rhythm::gameOver(const Player& p) {
 	DWORD dw;
 	COORD pos = p.getStart();
 	FillConsoleOutputCharacter(GetStdHandle(STD_OUTPUT_HANDLE), ' ', WINDOW_WIDTH * (WINDOW_HEIGHT - 3) / 2, pos, &dw);
@@ -76,7 +111,7 @@ void gameOver(const Player& p) {
 }
 
 // 승자를 나타내는 출력용 함수
-void gameWin(const Player& p) {
+void Rhythm::gameWin(const Player& p) {
 	DWORD dw;
 	COORD pos = p.getStart();
 	FillConsoleOutputCharacter(GetStdHandle(STD_OUTPUT_HANDLE), ' ', WINDOW_WIDTH * (WINDOW_HEIGHT - 3) / 2, pos, &dw);
@@ -104,7 +139,7 @@ void gameWin(const Player& p) {
 // 배열의 크기 = 문제 화살표의 개수
 // sort 사용하여 배열 크기를 오름차순으로 정렬
 // ↑↓←→ 중 하나를 무작위로 각 배열에 저장하여 문제 생성
-void makeArrow() {
+void Rhythm::makeArrow(vector<int> v[]) {
 	srand((unsigned int)time(NULL));
 	int n;
 	int temp[MAXIMUM_LEVEL];
@@ -120,16 +155,16 @@ void makeArrow() {
 			n = rand() % 4;
 			switch (n) {
 			case 0:
-				questionvec[i].push_back(UP);
+				v[i].push_back(UP);
 				break;
 			case 1:
-				questionvec[i].push_back(DOWN);
+				v[i].push_back(DOWN);
 				break;
 			case 2:
-				questionvec[i].push_back(LEFT);
+				v[i].push_back(LEFT);
 				break;
 			case 3:
-				questionvec[i].push_back(RIGHT);
+				v[i].push_back(RIGHT);
 				break;
 			}
 		}
@@ -139,12 +174,12 @@ void makeArrow() {
 }
 
 // 플레이어 level 값에 따라 문제 표시
-void printArrow(Player& p) {
+void Rhythm::printArrow(const vector<int>* v, Player& p) {
 	if (p.isWin()) return;
 	vector<int>::const_iterator it;
 	int index = p.getLevel() - 1;
 	string questionStr = p.getQstr();
-	for (it = questionvec[index].begin(); it != questionvec[index].end(); it++) {
+	for (it = v[index].begin(); it != v[index].end(); it++) {
 		switch (*it) {
 		case UP:
 			questionStr += "↑ ";
@@ -165,7 +200,34 @@ void printArrow(Player& p) {
 
 }
 
-void drawMap() {
+// 플레이어의 한 입력에 대한 정오 판정
+void Rhythm::checkAnswer(vector<int> v[], Player& p) {
+	int index = p.getLevel() - 1;
+	int inputNum = p.getNumOfInput();
+	vector<int> currentInput = p.getAvec();
+
+	if (v[index].size() <= inputNum) return;
+	if (v[index][inputNum] != currentInput[inputNum]) p.minusLife();
+	p.isPressed();
+}
+
+// 플레이어 상태 값에 따라 life 정보 표시
+void Rhythm::drawInfo(const Player& p) {
+	gotoxy(p.getStart().X, p.getStart().Y + 1);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
+	for (int i = 0; i < p.getLife(); i++) {
+		cout << "♥";
+	}
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
+	for (int i = 0; i < 3 - p.getLife(); i++) {
+		cout << "♡";
+	}
+	gotoxy(WINDOW_WIDTH - 20, p.getStart().Y + 1);
+	cout << "Level : " << p.getLevel() << " / " << MAXIMUM_LEVEL;
+
+}
+
+void Rhythm::drawMap() {
 	gotoxy(0, 0);
 	for (int i = 0; i < WINDOW_WIDTH / 2; i++) {
 		cout << "▦";
@@ -218,42 +280,15 @@ void drawMap() {
 	cout << ">>>";
 }
 
-// 플레이어 상태 값에 따라 life 정보 표시
-void drawInfo(const Player& p) {
-	gotoxy(p.getStart().X, p.getStart().Y + 1);
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 12);
-	for (unsigned int i = 0; i < p.getLife(); i++) {
-		cout << "♥";
-	}
-	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 15);
-	for (unsigned int i = 0; i < 3 - p.getLife(); i++) {
-		cout << "♡";
-	}
-	gotoxy(WINDOW_WIDTH - 20, p.getStart().Y + 1);
-	cout << "Level : " << p.getLevel() << " / " << MAXIMUM_LEVEL;
-
-}
-
-// 플레이어의 한 입력에 대한 정오 판정
-void checkAnswer(Player& p) {
-	int index = p.getLevel() - 1;
-	int inputNum = p.getNumOfInput();
-	vector<int> currentInput = p.getAvec();
-
-	if (questionvec[index].size() <= inputNum) return;
-	if (questionvec[index][inputNum] != currentInput[inputNum]) p.minusLife();
-	p.isPressed();
-}
-
 // 사용자의 방향키 입력수가 현재 문제보다 많아지는 상황
-bool isNext(const Player& p) {
+bool Rhythm::isNext(const vector<int> v[], const Player& p) {
 	int index = p.getLevel() - 1;
 	int inputNum = p.getNumOfInput();
-	return questionvec[index].size() <= inputNum;
+	return v[index].size() <= inputNum;
 }
 
 // 입력 칸 비우고 다음 단계 설정
-void setNext(Player& p) {
+void Rhythm::setNext(const vector<int> v[], Player& p) {
 	DWORD dw;
 	COORD pos = { p.getStart().X + 20, p.getStart().Y + 3 };
 	FillConsoleOutputCharacter(GetStdHandle(STD_OUTPUT_HANDLE), ' ', MAXIMUM_LEVEL * 3, pos, &dw);
@@ -264,7 +299,7 @@ void setNext(Player& p) {
 }
 
 // 승패여부를 확인하여 게임 상태 값을 가져옴
-GAME_STATE getState(const Player& p1, const Player& p2) {
+GAME_STATE Rhythm::getState(const Player& p1, const Player& p2) {
 	if (p1.isWin()) return P1WIN;
 	if (p2.isWin()) return P2WIN;
 	if (p1.isOver()) return P1OVER;
@@ -272,11 +307,12 @@ GAME_STATE getState(const Player& p1, const Player& p2) {
 	return ONGOING;
 }
 
-void gameScreen() {
+void Rhythm::gameScreen() {
 	system("cls");
 	GAME_STATE state = ONGOING;
 	Player p1, p2(1);
 
+	vector<int> questionvec[MAXIMUM_LEVEL]; // 전체 문제세트를 미리 설정, 각 플레이어 레벨에 따라 순차 접근
 	int input = 0;
 	bool valid;
 
@@ -285,9 +321,9 @@ void gameScreen() {
 	drawMap();
 	drawInfo(p1);
 	drawInfo(p2);
-	makeArrow();
-	printArrow(p1);
-	printArrow(p2);
+	makeArrow(questionvec);
+	printArrow(questionvec, p1);
+	printArrow(questionvec, p2);
 	FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE)); // Sleep 이전 입력 제거
 
 	while (state == ONGOING) {
@@ -321,7 +357,7 @@ void gameScreen() {
 				if (valid) {
 					gotoxy(p1.getStart().X + 20, p1.getStart().Y + 4);
 					cout << p1.getAstr();
-					checkAnswer(p1);
+					checkAnswer(questionvec, p1);
 				}
 			}
 
@@ -355,16 +391,16 @@ void gameScreen() {
 				if (valid) {
 					gotoxy(p2.getStart().X + 20, p2.getStart().Y + 4);
 					cout << p2.getAstr();
-					checkAnswer(p2);
+					checkAnswer(questionvec, p2);
 				}
 			}
-			if (isNext(p1)) {
-				setNext(p1);
-				printArrow(p1);
+			if (isNext(questionvec, p1)) {
+				setNext(questionvec, p1);
+				printArrow(questionvec, p1);
 			}
-			if (isNext(p2)) {
-				setNext(p2);
-				printArrow(p2);
+			if (isNext(questionvec, p2)) {
+				setNext(questionvec, p2);
+				printArrow(questionvec, p2);
 			}
 			drawInfo(p1);
 			drawInfo(p2);
@@ -394,4 +430,9 @@ void gameScreen() {
 	PlaySound(TEXT("win.wav"), NULL, SND_NODEFAULT | SND_FILENAME);
 	PlaySound(NULL, NULL, 0);
 	Sleep(3000);
+}
+
+void Rhythm::start() {
+	setSize();
+	gameScreen();
 }
