@@ -423,6 +423,10 @@ void Rhythm::gameScreen() {
 				break;
 			}
 
+			if (input == VK_ESCAPE) {
+				PlaySound(NULL, NULL, 0);
+				return;
+			}
 		}
 	}
 	PlaySound(NULL, NULL, 0);

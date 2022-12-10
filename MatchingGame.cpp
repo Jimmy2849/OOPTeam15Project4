@@ -90,6 +90,7 @@ void Matching::start() {
             //스페이스바 입력시
             flipCard();
         }
+        if (key == VK_ESCAPE) return;
 
         draw(); // 화면 그리기
         checkCard(); // 플레이어가 선택한 카드들이 같은 짝인지 확인

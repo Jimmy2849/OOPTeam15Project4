@@ -127,6 +127,7 @@ void Dice::start() {
                 selectScore(); // Select Score
             }
         }
+        if (key == VK_ESCAPE) return;
         if (!mode) status = "Pick the dice to reroll";
         else status = "Pick the score you want";
         draw();
