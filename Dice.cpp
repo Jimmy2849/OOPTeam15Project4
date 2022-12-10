@@ -132,9 +132,7 @@ void Dice::start() {
         draw();
     }
 
-
     printResult();
-
     CursorView(true);
 }
 
